@@ -63,19 +63,14 @@ for file in ${InputDir}/*; do
 	fi
 done
 
-
-	#move the MNC files to Intensity Correction 
-
-if [ ${file##.}=mnc ] 
-	then mv ${InputDir}/*${Mnc} ${InputDir}/IntensityCorrection
-fi
-
+#move the MNC files to Intensity Correction 
+mv ${InputDir}/*${Mnc} ${InputDir}/IntensityCorrection
 
 ############################################################################################################################
 ###STEP 2 -- Intensity correction of MNC files. 
 
 for file in ${InputDir}/IntensityCorrection/*; do
-		nu_correct ${file} ${file%.mnc}_IntensityCorrected.mnc	#referencing other script that performs intensity correction.
+	nu_correct ${file} ${file%.mnc}_IntensityCorrected.mnc	#referencing other script that performs intensity correction.
 done
 
 ############################################################################################################################
@@ -87,33 +82,26 @@ for file in ${InputDir}/IntensityCorrection/*; do
 	fi
 done
 
-for file in ${InputDir}/IntensityCorrection/*; do
-	if [ ${file##.}=nii ] 
-		then mv ${InputDir}/IntensityCorrection/*${IntCorr} ${InputDir}/LSQ6/Model
-	fi		
-done
+mv ${InputDir}/IntensityCorrection/*${IntCorr} ${InputDir}/LSQ6/Model
 
 ############################################################################################################################
 #STEP 4 -- Rigid registration of all brains from native space to the same stereotactic space as a manually selected "Model.nii.gz"
 
 for file in ${InputDir}/LSQ6/Model/*; do 
-		antsRegistrationsyn.sh -d 3 -t r -n 2 -o ${file%.nii}_lsq6_to_Model_ -f ${InputDir}/Model.nii.gz -m ${file}
-	    ###ANTS is a series of scripts for neuroimaging analysis. This "antsRegistrationsyn.sh" performs image registration.###
+	antsRegistrationsyn.sh -d 3 -t r -n 2 -o ${file%.nii}_lsq6_to_Model_ -f ${InputDir}/Model.nii.gz -m ${file}
+    ###ANTS is a series of scripts for neuroimaging analysis. This "antsRegistrationsyn.sh" performs image registration.###
 done
 
 ##This step needs to keep the LSQ6 registered images in the appropriate folder, but they are also needed 
 #as input for initial template creation and population template created. I should probably just leave them where
 ##they are and reference these files from their location. 
-for i in ${InputDir}/LSQ6/Model/*; do
-		cp ${InputDir}/LSQ6/Model/*${WarpedNii} ${InputDir}/MVTC/InitialTemplate/
-		cp ${InputDir}/LSQ6/Model/*${WarpedNii} ${InputDir}/MVTC/PopulationTemplate/
-done
+cp ${InputDir}/LSQ6/Model/*${WarpedNii} ${InputDir}/MVTC/InitialTemplate/
+cp ${InputDir}/LSQ6/Model/*${WarpedNii} ${InputDir}/MVTC/PopulationTemplate/
 
 ############################################################################################################################
 #STEP 5 -- Build initial template for the multivariate template construction (step 6)
 
 cd ${InputDir}/MVTC/InitialTemplate
-
 buildtemplateparallel.sh -d 3 -o Initial_ -c 0 -n 0 -t RA -m 1x0x0 *_Warped.nii.gz
 ###ANTS is a series of scripts for neuroimaging analysis. This "buildtemplateparallel.sh" generates an averaged template image.###
 ### This step generates the "initial template", used as the starting point for generating the "full template" ###
@@ -122,20 +110,13 @@ buildtemplateparallel.sh -d 3 -o Initial_ -c 0 -n 0 -t RA -m 1x0x0 *_Warped.nii.
 #STEP 6 -- Build full template with lsq6_to_Model brains as input and InitialTemplate.nii.gz as the initial template
 
 cd ${InputDir}/MVTC/PopulationTemplate/
-
 buildtemplateparallel.sh -d 3 -o StrainComparison_ -c 2 -i 10 -g 0.10 -n 0 -m 100x70x20 -r 0 -t GR -z ${InputDir}/MVTC/InitialTemplate/Initial_template.nii.gz *_Warped.nii.gz
 ###ANTS is a series of scripts for neuroimaging analysis. This "buildtemplateparallel.sh" generates an averaged template image.###
 ### This step generates the "full template", using the "initial template" as a starting target ###
 
 ############################################################################################################################
 #STEP 7 -- Re-register individual brains to full template
-
-
-for file in ${InputDir}/IntensityCorrection/*; do
-	if [ ${file##.}=nii ] 
-		then cp ${InputDir}/IntensityCorrection/*${IntCorr} ${InputDir}/LSQ6/PopulationTemplate
-	fi
-done
+mv ${InputDir}/IntensityCorrection/*${IntCorr} ${InputDir}/LSQ6/PopulationTemplate
 
 for file in ${InputDir}/LSQ6/PopulationTemplate/*; do 
 		antsRegistrationsyn.sh -d 3 -t r -n 2 -o ${file%.nii}_LSQ6_to_PopulationTemplate_ -f ${InputDir}/MVTC/PopulationTemplate/StrainComparison_template.nii.gz -m ${file}
@@ -147,11 +128,7 @@ done
 #STEP 8 -- Use linearly re-registered (lsq6) brains and do full non-linear registration to the population average template
 
 #leave these files where they are???
-for i in ${InputDir}/MVTC/PopulationTemplate/*; do
-	if [ ${file##.}=nii ] 
-		then cp ${InputDir}/MVTC/PopulationTemplate/*${WarpedNii} ${InputDir}/SYN/PopulationTemplate
-	fi
-done
+cp ${InputDir}/MVTC/PopulationTemplate/*${WarpedNii} ${InputDir}/SYN/PopulationTemplate
 
 for file in ${InputDir}/SYN/PopulationTemplate/*; do 
 		antsRegistrationsyn.sh -d 3 -t s -n 2 -o ${file%.nii.gz}_SYN_to_PopulationTemplate_ -f ${InputDir}/MVTC/PopulationTemplate/StrainComparison_template.nii.gz -m ${file}
