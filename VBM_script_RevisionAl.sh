@@ -54,8 +54,6 @@ if [ ! -d "$InputDir"/MVTC/PopulationTemplate ]; then
 	mkdir ${InputDir}/MVTC/PopulationTemplate
 fi	
 
-echo "ah, ah , ah,  ah , makin a change, makin a change!"
-
 ############################################################################################################################
 #STEP 1 -- Transform registered NII images to MNC for intensity correction (step 3)
 
@@ -68,11 +66,9 @@ done
 
 	#move the MNC files to Intensity Correction 
 
-for file in ${InputDir}/*; do
-	if [ ${file##.}=mnc ] 
-		then mv ${InputDir}/*${Mnc} ${InputDir}/IntensityCorrection
-	fi
-done
+if [ ${file##.}=mnc ] 
+	then mv ${InputDir}/*${Mnc} ${InputDir}/IntensityCorrection
+fi
 
 
 ############################################################################################################################
@@ -86,19 +82,15 @@ done
 #STEP 3 -- Convert intensity corrected MNC files back to nifti
 
 for file in ${InputDir}/IntensityCorrection/*; do
-	
 	if [ ${file%.mnc}=_IntensityCorrected ]
 		then mnc2nii ${file} ${file%.mnc}.nii #referencing other script "mnc2nii" that does inverse conversion.
 	fi
-	
-	for i in ${InputDir}/IntensityCorrection/*; do
-	
-		if [ ${file##.}=nii ] 
-			then cp ${InputDir}/IntensityCorrection/*${IntCorr} ${InputDir}/LSQ6/Model
-		fi
-		
-	done
+done
 
+for file in ${InputDir}/IntensityCorrection/*; do
+	if [ ${file##.}=nii ] 
+		then mv ${InputDir}/IntensityCorrection/*${IntCorr} ${InputDir}/LSQ6/Model
+	fi		
 done
 
 ############################################################################################################################
