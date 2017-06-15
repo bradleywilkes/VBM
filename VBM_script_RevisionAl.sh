@@ -54,7 +54,7 @@ if [ ! -d "$InputDir"/MVTC/PopulationTemplate ]; then
 	mkdir ${InputDir}/MVTC/PopulationTemplate
 fi	
 
-
+echo "ah, ah , ah,  ah , makin a change, makin a change!"
 
 ############################################################################################################################
 #STEP 1 -- Transform registered NII images to MNC for intensity correction (step 3)
